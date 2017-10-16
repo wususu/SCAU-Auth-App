@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request, send_file, make_response
-from  functools import wraps
+from functools import wraps
 from code_spider import CodeSpider
 
 from login_spider import LoginSpider
@@ -18,12 +18,12 @@ def allow_cross_domain(fun):
     return wrapper_fun
 
 
-@app.route('/auth_get', methods=['GET'])
+@app.route('/auth/get', methods=['GET'])
 @allow_cross_domain
 def auth_get():
     return jsonify(CodeSpider().run())
 
-@app.route('/auth_post', methods=['POST'])
+@app.route('/auth/post', methods=['POST'])
 @allow_cross_domain
 def auth_post():
     session = request.values.get('session')
@@ -36,7 +36,7 @@ def auth_post():
     print(session, " ", view_state, " ", username," ",passwd," ",code)
     return jsonify(LoginSpider(number=username, passwd=passwd, session=session, view_state=view_state, code=code).run())
 
-@app.route('/image/<imageid>', methods=['GET'])
+@app.route('/auth/image/<imageid>', methods=['GET'])
 @allow_cross_domain
 def image(imageid):
     return send_file("static/code_img/{}.gif".format(imageid))

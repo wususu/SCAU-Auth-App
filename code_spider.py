@@ -10,7 +10,7 @@ class CodeSpider:
         self.__session__ = self.__session_spider_data__.get('session')
         self.__view_state__ = self.__session_spider_data__.get('view_state')
         self.__path__ = tools.path + "/" + self.__session__ + ".gif"
-        self.__web_path__ = "/image/"+self.__session__
+        self.__web_path__ = "/auth/image/"+self.__session__
         self.__reault__ = {
             'session': self.__session__,
             'path': self.__web_path__,
