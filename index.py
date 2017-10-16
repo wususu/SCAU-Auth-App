@@ -1,16 +1,30 @@
-from flask import Flask, jsonify, request, send_file
+from flask import Flask, jsonify, request, send_file, make_response
+from  functools import wraps
 from code_spider import CodeSpider
 
 from login_spider import LoginSpider
 
 app = Flask(__name__)
 
+def allow_cross_domain(fun):
+    @wraps(fun)
+    def wrapper_fun(*args, **kwargs):
+        rst = make_response(fun(*args, **kwargs))
+        rst.headers['Access-Control-Allow-Origin'] = '*'
+        rst.headers['Access-Control-Allow-Methods'] = 'PUT,GET,POST,DELETE'
+        allow_headers = "Referer,Accept,Origin,User-Agent"
+        rst.headers['Access-Control-Allow-Headers'] = allow_headers
+        return rst
+    return wrapper_fun
+
 
 @app.route('/auth_get', methods=['GET'])
+@allow_cross_domain
 def auth_get():
     return jsonify(CodeSpider().run())
 
 @app.route('/auth_post', methods=['POST'])
+@allow_cross_domain
 def auth_post():
     session = request.values.get('session')
     view_state = request.values.get('view_state')
@@ -23,6 +37,7 @@ def auth_post():
     return jsonify(LoginSpider(number=username, passwd=passwd, session=session, view_state=view_state, code=code).run())
 
 @app.route('/image/<imageid>', methods=['GET'])
+@allow_cross_domain
 def image(imageid):
     return send_file("static/code_img/{}.gif".format(imageid))
 
