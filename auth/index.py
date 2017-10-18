@@ -1,10 +1,22 @@
-from flask import Flask, jsonify, request, send_file, make_response
 from functools import wraps
-from code_spider import CodeSpider
 
-from login_spider import LoginSpider
+from auth.code_spider import CodeSpider
+from flask import Flask, jsonify, request, send_file, make_response
+from auth.login_spider import LoginSpider
+from auth.client import RCPClient
+from auth.config import *
+import os, json
 
 app = Flask(__name__)
+app.debug = False
+error = {
+    "state": "error"
+}
+ok = {
+    "state": "success",
+    "data": None
+}
+
 
 def allow_cross_domain(fun):
     @wraps(fun)
@@ -23,6 +35,7 @@ def allow_cross_domain(fun):
 def auth_get():
     return jsonify(CodeSpider().run())
 
+
 @app.route('/auth/post', methods=['POST'])
 @allow_cross_domain
 def auth_post():
@@ -31,15 +44,32 @@ def auth_post():
     username = request.values.get('username')
     passwd = request.values.get('passwd')
     code = request.values.get('code')
+    uid = request.values.get('uid')
+
     if session is None or view_state is None or username is None or passwd is None or code is None:
-        return jsonify(LoginSpider.error)
-    print(session, " ", view_state, " ", username," ",passwd," ",code)
-    return jsonify(LoginSpider(number=username, passwd=passwd, session=session, view_state=view_state, code=code).run())
+        return jsonify(error)
+    name= LoginSpider(number=username, passwd=passwd, session=session, view_state=view_state, code=code).run()
+    if name != None:
+        auth_data = {
+            'number': username,
+            'name': name,
+            'uid': uid
+        }
+        rpc_client = RCPClient()
+        data = rpc_client.send(auth_data)
+        print(data)
+        if data != None:
+            print(data)
+            ok['data'] = data
+            return jsonify(ok)
+    return jsonify(error)
+
 
 @app.route('/auth/image/<imageid>', methods=['GET'])
 @allow_cross_domain
 def image(imageid):
     return send_file("static/code_img/{}.gif".format(imageid))
+
 
 if __name__ == '__main__':
     app.debug = True
